@@ -3,10 +3,10 @@ function [ distance ] = DeltaR( Peaks )
 %   Detailed explanation goes here
 
 for i=2:size(Peaks,1)
-   
     distance(i) = Peaks(i)-Peaks(i-1);
 end
 
+distance =  distance(2:end);
 
 
 end

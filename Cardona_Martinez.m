@@ -4,7 +4,7 @@ clear; clc; close all;
 ZeroVal=1024;
 Gain=200;
 
-path = '109-ECG__.bin';
+path = '118-ECG__.bin';
 
 C = strsplit(path,'-');
 numeroArchivo = C{1};
@@ -20,11 +20,13 @@ X = ReadTimeFile(strcat('Work_Data/',stringTime)); %Se carga el tiempo para dich
 figure;
 plot(X,Y); %Se grafica el electrocardiograma.
 
-[PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.09);
+%[peack,locs_Rwave] = findpeaks(Y,X,'MinPeakHeight',0.5,...
+                                   % 'MinPeakDistance',0.);
+[PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.5);
 
-[PKS2,LOC2] = findpeaks(PKS,LOCS,'Threshold',0.1);
+%[PKS2,LOC2] = findpeaks(PKS,LOCS,'Threshold',0.1);
 
-[PKS3,LOC3] = findpeaks(PKS,LOCS,'MinPeakProminence',0.5);
+%[PKS3,LOC3] = findpeaks(PKS,LOCS,'MinPeakProminence',0.5);
 
 anotaciones = ReadTxt(strcat('Work_Data/',stringTxt));
 annTime = anotaciones{1,1};
@@ -34,22 +36,29 @@ count = 0;
 for i=1:size(annCode,1)
     if annCode(i) >= 5 && annCode(i) <=9
         count = count+1;
+        arrs(count) = annTime(i);
     end
 end
 figure(2);
 distances = DeltaR(LOCS);
-plot(LOCS,distances);
+plot(LOCS(2:end),distances);
 
-media = mean(distances);
-desv = std(distances);
-x = media + desv/2;
+media = 0.9;
+desv = 0.3;
+x1 = media + desv;
+x2 = media - desv;
 k = 1;
 for i=1:size(distances,2)
-    if distances(1,i) >= x 
-        arritmias(k) = distances(1,i);
-        tiempos(k) = LOCS(i)
+    if distances(1,i) >= x1 ||  distances(1,i) <= x2
+        arritmias(k) = PKS(i);
+        tiempos(k) = LOCS(i);
         k = k+1;
     end
 end
+
+figure(3)
+plot(X,Y)
+hold on
+plot(tiempos,arritmias,'rv','MarkerFaceColor','r');
 
 
