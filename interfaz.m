@@ -98,6 +98,8 @@ switch popup_sel_index
     case 5
         disp('asd')
         surf(peaks);
+    case 6 
+        
 end
 
 
