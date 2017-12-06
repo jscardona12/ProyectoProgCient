@@ -1,10 +1,8 @@
 clear; clc; close all;
-
-
 ZeroVal=1024;
 Gain=200;
 
-path = '118-ECG__.bin';
+path = '100-ECG__.bin';
 
 C = strsplit(path,'-');
 numeroArchivo = C{1};
@@ -51,14 +49,20 @@ k = 1;
 for i=1:size(distances,2)
     if distances(1,i) >= x1 ||  distances(1,i) <= x2
         arritmias(k) = PKS(i);
+        distancias(k) = distances(1,i);
         tiempos(k) = LOCS(i);
         k = k+1;
     end
 end
 
+%[arritmias,tiempos] = Umbral(distances,PKS,LOCS);
+
 figure(3)
 plot(X,Y)
 hold on
 plot(tiempos,arritmias,'rv','MarkerFaceColor','r');
-
+hold off
+bpm = 60./(distances(1:end));
+figure(4)
+plot(LOCS(2:end),bpm);
 
