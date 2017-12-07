@@ -2,7 +2,7 @@ clear; clc; close all;
 ZeroVal=1024;
 Gain=200;
 
-path = '100-ECG__.bin';
+path = '105-ECG__.bin';
 
 C = strsplit(path,'-');
 numeroArchivo = C{1};
@@ -65,4 +65,11 @@ hold off
 bpm = 60./(distances(1:end));
 figure(4)
 plot(LOCS(2:end),bpm);
+
+
+[ sensitivity, prediccion] = Validacion(tiempos,arrs);
+
+
+
+
 
