@@ -22,7 +22,7 @@ function varargout = interfaz(varargin)
 
 % Edit the above text to modify the response to help interfaz
 
-% Last Modified by GUIDE v2.5 06-Dec-2017 16:00:50
+% Last Modified by GUIDE v2.5 07-Dec-2017 13:50:12
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -42,7 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
-
+fileName = '';
 % --- Executes just before interfaz is made visible.
 function interfaz_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
@@ -79,32 +79,84 @@ varargout{1} = handles.output;
 
 % --- Executes on button press in pushbutton1.
 function pushbutton1_Callback(hObject, eventdata, handles)
+a = ["100-ECG__.bin";"105-ECG__.bin"; "109-ECG__.bin"; "116-ECG__.bin"; "118-ECG__.bin"; "119-ECG__.bin"]
 % hObject    handle to pushbutton1 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 axes(handles.axes3);
-cla;
-popup_sel_index = get(handles.popupmenu1, 'Value');
-switch popup_sel_index
-    case 1
-        disp('hola')
-        plot(rand(5));
-    case 2
-        plot(sin(1:0.01:25.99));
-    case 3
-        bar(1:.5:10);
-    case 4
-        plot(membrane);
-    case 5
-        disp('asd')
-        surf(peaks);
-    case 6 
-        
+index = get(handles.popupmenu1, 'Value')
+path = a(index);
+C = strsplit(path,'-');
+numeroArchivo = C{1};
+stringTime = strcat(numeroArchivo,'-Time__.bin');
+stringTxt = strcat(numeroArchivo,'-Ann__.txt');
+
+Y = ReadECGFile(strcat('Work_Data/',path)); %Se carga el EGC data.
+X = ReadTimeFile(strcat('Work_Data/',stringTime));
+plot(X,Y)
+[PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.5);
+
+%[PKS2,LOC2] = findpeaks(PKS,LOCS,'Threshold',0.1);
+
+%[PKS3,LOC3] = findpeaks(PKS,LOCS,'MinPeakProminence',0.5);
+
+anotaciones = ReadTxt(strcat('Work_Data/',stringTxt));
+annTime = anotaciones{1,1};
+annCode = anotaciones{1,2};
+
+count = 0;
+for i=1:size(annCode,1)
+    if annCode(i) >= 5 && annCode(i) <=9
+        count = count+1;
+        arrs(count) = annTime(i);
+    end
 end
+axes(handles.axes4);
+distances = DeltaR(LOCS);
+plot(LOCS(2:end),distances);
+title("Tacograma")
+xlabel("tiempo(s)");
+ylabel("R-Rinterval(s)")
+media = 0.9;
+desv = 0.3;
+x1 = media + desv;
+x2 = media - desv;
+k = 1;
+for i=1:size(distances,2)
+    if distances(1,i) >= x1 ||  distances(1,i) <= x2
+        arritmias(k) = PKS(i);
+        distancias(k) = distances(1,i);
+        tiempos(k) = LOCS(i);
+        k = k+1;
+    end
+end
+
+%[arritmias,tiempos] = Umbral(distances,PKS,LOCS);
+
+axes(handles.axes3);
+plot(X,Y)
+hold on
+plot(tiempos,arritmias,'rv','MarkerFaceColor','r');
+hold off
+title("ECG VS TIEMPO")
+legend("ECG","Arritmias");
+xlabel("tiempo(s)");
+ylabel("ECG")
+bpm = 60./(distances(1:end));
+axes(handles.axes5);
+plot(LOCS(2:end),bpm);
+title("BPM VS TIEMPO")
+xlabel("tiempo(s)");
+ylabel("BPM")
+
+[ sensitivity, prediccion] = Validacion(tiempos,arrs);
+set(handles.text3,'String',num2str(sensitivity));
+set(handles.text4,'String',num2str(prediccion));
 
 
 % --------------------------------------------------------------------
 function FileMenu_Callback(hObject, eventdata, handles)
+disp(hObject);
 % hObject    handle to FileMenu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -148,8 +200,10 @@ function popupmenu1_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = get(hObject,'String') returns popupmenu1 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu1
+ contents = get(hObject,'String'); %returns popupmenu1 contents as cell array
+disp(contents{get(hObject,'Value')}) %returns selected item from popupmenu1
+handles.fileName = contents{get(hObject,'Value')};
+
 
 
 % --- Executes during object creation, after setting all properties.
@@ -163,5 +217,21 @@ function popupmenu1_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
      set(hObject,'BackgroundColor','white');
 end
+fileName = '100-ECG__.bin';
+set(hObject, 'String', {'100-ECG__.bin', '105-ECG__.bin', '109-ECG__.bin', '116-ECG__.bin', '118-ECG__.bin','119-ECG__.bin'});
 
-set(hObject, 'String', {'100-ECG', '105-ECG', '109-ECG', '116-ECG', '118-ECG','119-ECG'});
+
+% --- Executes during object creation, after setting all properties.
+function axes3_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to axes3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: place code in OpeningFcn to populate axes3
+
+
+% --- Executes during object creation, after setting all properties.
+function text4_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to text4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
