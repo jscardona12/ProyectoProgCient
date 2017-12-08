@@ -86,6 +86,7 @@ a = ["100-ECG__.bin";"105-ECG__.bin"; "109-ECG__.bin"; "116-ECG__.bin"; "118-ECG
 axes(handles.axes3);
 index = get(handles.popupmenu1, 'Value')
 path = a(index);
+
 C = strsplit(path,'-');
 numeroArchivo = C{1};
 stringTime = strcat(numeroArchivo,'-Time__.bin');
@@ -94,7 +95,47 @@ stringTxt = strcat(numeroArchivo,'-Ann__.txt');
 Y = ReadECGFile(strcat('Work_Data/',path)); %Se carga el EGC data.
 X = ReadTimeFile(strcat('Work_Data/',stringTime));
 plot(X,Y)
-[PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.5);
+switch index
+    case 1
+        media = 0.9;
+        desv = 0.3;
+        x1 = media + desv;
+        x2 = media - desv;
+        [PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.5,'MinPeakDistance',0.12);
+    case 2
+        media = 0.9;
+        desv = 0.3;
+        x1 = media + desv;
+        x2 = media - desv;
+        [PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.5,'MinPeakDistance',0.12);
+    case 3
+        media = 0.9;
+        desv = 0.3;
+        x1 = media + desv;
+        x2 = media - desv;
+         [PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.5,'MinPeakDistance',0.12);
+    case 4
+        media = 0.9;
+        desv = 0.3;
+        x1 = media + desv;
+        x2 = media - desv;
+        [PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.5,'MinPeakDistance',0.12);
+    case 5
+        media = 0.9;
+        desv = 0.3;
+        x1 = 1.8;
+        x2 = 0.4;
+       [PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.5,'MinPeakDistance',0.2);
+    case 6
+        media = 0.9;
+        desv = 0.3;
+        x1 = media + desv;
+        x2 = media - desv
+       [PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.5,'MinPeakDistance',0.7);
+       %COMMIT
+end
+
+
 
 %[PKS2,LOC2] = findpeaks(PKS,LOCS,'Threshold',0.1);
 
@@ -117,13 +158,10 @@ plot(LOCS(2:end),distances);
 title("Tacograma")
 xlabel("tiempo(s)");
 ylabel("R-Rinterval(s)")
-media = 0.9;
-desv = 0.3;
-x1 = media + desv;
-x2 = media - desv;
+
 k = 1;
 for i=1:size(distances,2)
-    if distances(1,i) >= x1 ||  distances(1,i) <= x2
+    if distances(1,i) >= x1 ||  distances(1,i) <= 0.6
         arritmias(k) = PKS(i);
         distancias(k) = distances(1,i);
         tiempos(k) = LOCS(i);
@@ -231,7 +269,7 @@ function axes3_CreateFcn(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function text4_CreateFcn(hObject, eventdata, handles)
+function text4_CreateFcn(hObject, ~, handles)
 % hObject    handle to text4 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
