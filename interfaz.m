@@ -79,28 +79,28 @@ varargout{1} = handles.output;
 
 % --- Executes on button press in pushbutton1.
 function pushbutton1_Callback(hObject, eventdata, handles)
+%Se crea un arreglo con los nombres de los archivos.
 a = ["100-ECG__.bin";"105-ECG__.bin"; "109-ECG__.bin"; "116-ECG__.bin"; "118-ECG__.bin"; "119-ECG__.bin"]
-% hObject    handle to pushbutton1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-axes(handles.axes3);
-index = get(handles.popupmenu1, 'Value')
-path = a(index);
-
-C = strsplit(path,'-');
-numeroArchivo = C{1};
-stringTime = strcat(numeroArchivo,'-Time__.bin');
-stringTxt = strcat(numeroArchivo,'-Ann__.txt');
+axes(handles.axes3); %Se selecciona la grafica 3.
+index = get(handles.popupmenu1, 'Value') %Se obtiene el indice del archivo seleccionado por el usuario.
+path = a(index); %El path es la posición index en el arreglo a.
+C = strsplit(path,'-'); %Se hace un split por el guion para obtener el numero del archivo seleccionado.
+numeroArchivo = C{1}; %Se obtiene el numero de archivo seleccionado.
+stringTime = strcat(numeroArchivo,'-Time__.bin'); %Se genera el path para los datos de tiempo.
+stringTxt = strcat(numeroArchivo,'-Ann__.txt'); %Se genera el path para los datos de anotaciones.
 
 Y = ReadECGFile(strcat('Work_Data/',path)); %Se carga el EGC data.
-X = ReadTimeFile(strcat('Work_Data/',stringTime));
-plot(X,Y)
+X = ReadTimeFile(strcat('Work_Data/',stringTime)); %Se cargan los tiempos asociados.
+plot(X,Y) %Se realiza la grafica inicial.
+%Se establecen los umbrales para cada paciente.
 switch index
     case 1
         media = 0.9;
         desv = 0.3;
         x1 = media + desv;
         x2 = media - desv;
+        %Se filtran los picos a partir de una altura minima de 0.5 y una
+        %distancia minima entre ellos de 0.12
         [PKS,LOCS] = findpeaks(Y,X,'MinPeakHeight',0.5,'MinPeakDistance',0.12);
     case 2
         media = 0.9;
@@ -136,15 +136,14 @@ switch index
 end
 
 
-
-%[PKS2,LOC2] = findpeaks(PKS,LOCS,'Threshold',0.1);
-
-%[PKS3,LOC3] = findpeaks(PKS,LOCS,'MinPeakProminence',0.5);
-
-anotaciones = ReadTxt(strcat('Work_Data/',stringTxt));
-annTime = anotaciones{1,1};
+anotaciones = ReadTxt(strcat('Work_Data/',stringTxt)); %Se cargan los datos de las anotaciones.
+annTime = anotaciones{1,1}; %Se obtiene cada una de las columnas del archivo de anotaciones.
 annCode = anotaciones{1,2};
 
+%El siguiente ciclo cuenta el numero de arritmias que se deben encontrar
+%segun el archivo de anotaciones. Se considero arritmia a los tipos ente 5
+%y 9. Adicional, se guardaron los tiempos en los que ocurren dichas
+%arritmias, esto con el fin de validar posteriormente.
 count = 0;
 for i=1:size(annCode,1)
     if annCode(i) >= 5 && annCode(i) <=9
@@ -152,13 +151,17 @@ for i=1:size(annCode,1)
         arrs(count) = annTime(i);
     end
 end
-axes(handles.axes4);
-distances = DeltaR(LOCS);
-plot(LOCS(2:end),distances);
+axes(handles.axes4); %Se selecciono la grafica 4 en interfaz.
+distances = DeltaR(LOCS); %Se calcularon las distancias entre los R.
+plot(LOCS(2:end),distances); %Se grafico el tacograma.
+%Se agregan titulos.
 title("Tacograma")
 xlabel("tiempo(s)");
 ylabel("R-Rinterval(s)")
 
+%El siguiente ciclo realiza la validacion de las distancias para determinar
+%las posibles arritmiar, una vez encontrada se guardan datos de la misma en
+%los arreglos arritmias, distancias y tiempos.
 k = 1;
 for i=1:size(distances,2)
     if distances(1,i) >= x1 ||  distances(1,i) <= 0.6
@@ -169,24 +172,27 @@ for i=1:size(distances,2)
     end
 end
 
-%[arritmias,tiempos] = Umbral(distances,PKS,LOCS);
-
-axes(handles.axes3);
-plot(X,Y)
+axes(handles.axes3); %Se selecciona el grafico 3.
+plot(X,Y) %Se grafica el inicial.
 hold on
+%Se marcan las arritmias sobre la grafica del electrocardiograma.
 plot(tiempos,arritmias,'rv','MarkerFaceColor','r');
 hold off
+%Se ponen los titulos.
 title("ECG VS TIEMPO")
 legend("ECG","Arritmias");
 xlabel("tiempo(s)");
 ylabel("ECG")
+%Se calcula el bpm
 bpm = 60./(distances(1:end));
-axes(handles.axes5);
+axes(handles.axes5); %Se selecciona la grafica 5 y se grafica el bpm
 plot(LOCS(2:end),bpm);
 title("BPM VS TIEMPO")
 xlabel("tiempo(s)");
 ylabel("BPM")
 
+%Se calcula la sensibilidad y las prediccines positivas y se actualizan los
+%labels en la interfaz.
 [ sensitivity, prediccion] = Validacion(tiempos,arrs);
 set(handles.text3,'String',num2str(sensitivity));
 set(handles.text4,'String',num2str(prediccion));
